@@ -1,0 +1,69 @@
+ <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <button class="navbar-toggler" type="button" data-toggle="collapse"
+          data-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01"
+          aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+    <a class="navbar-brand" href="#">Построить оптимальный маршрут курьера</a>
+    <!--    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">-->
+    <!--      <li class="nav-item active">-->
+    <!--        <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>-->
+    <!--      </li>-->
+    <!--      <li class="nav-item">-->
+    <!--        <a class="nav-link" href="#">Link</a>-->
+    <!--      </li>-->
+    <!--      <li class="nav-item">-->
+    <!--        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>-->
+    <!--      </li>-->
+    <!--    </ul>-->
+  </div>
+</nav>
+<br>
+<div class="container-fluid">
+  <div class="row">
+    <div align="center" class="col-7">
+      <h6>Введите адреса доставки и выберите тип транспорта:</h6>
+      <br>
+      <div class="row">
+        <div class="col-6" style="border-right: 1px solid #BBBBBB;>
+            <%= bootstrap_form_tag  do |f| %>
+            <label>Тип транспорта: </label>
+            <div style="border: 1px solid #BBBBBB; text-align: left ; padding-left: 40px; border-radius:5px">
+          <%= f.radio_button :transport, 0, label: "Автомобиль" %>
+          <%= f.radio_button :transport, 1, label: "Общественный транспорт", checked: true %>
+          <%= f.radio_button :transport, 2, label: "Велосипед" %>
+          <%= f.radio_button :transport, 3, label: "Пешком" %>
+        </div>
+          <br>
+          <%= f.text_field :start_address, label: "Начальный адрес", id: 'start-addr', placeholder: "Введите начальный адрес", value: "Москва" %>
+          <%= f.submit "Добавить на карту", class: "btn btn-info", id: "add-start" %>
+          <br> <br> <br>
+
+          <%= f.text_field :end_address, label: "Конечный адрес", id: 'end-addr', placeholder: "Введите конечный адрес", value: "Воронеж" %>
+          <%= f.submit "Добавить на карту", class: "btn btn-info", id: "add-end" %>
+        </div>
+          <div class="col-6">
+            <p>Введите транзитные точки:</p>
+            <div class="dubl-cont">
+              <div class="f-group">
+                <%= f.text_field :end_address, label: "Адрес 1", id: "transit1", placeholder: "Введите транзитный адрес", value: "Ставрополь" %>
+                <%= f.submit "Добавить на карту", class: "btn btn-info", id: "add-transit1" %>
+              </div>
+              <br>
+            </div>
+            <%= f.submit "Добавить еще транзитную точку", class: "btn btn-primary  addr-copy-btn" %>
+            <br><br>
+          </div>
+        </div>
+        </div>
+          <!--    MAP-->
+          <div style="border-left: 1px solid #BBBBBB" align="center" class="col-5">
+            <div id="map" style="width: 500px; height: 550px"></div>
+            <br>
+            <%= f.submit "Построить маршрут", class: "btn btn-success", id: "create-route" %>
+          <% end %>
+        </div>
+          <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+          <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+          <script src="create_route.js"></script>

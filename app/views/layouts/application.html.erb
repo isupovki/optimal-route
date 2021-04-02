@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Course</title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= stylesheet_link_tag 'application', media: 'all', 'data-turbolinks-track': 'reload' %>
+  <%= javascript_pack_tag 'application', 'data-turbolinks-track': 'reload' %>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <script src="https://yandex.st/jquery/2.2.3/jquery.min.js" type="text/javascript"></script>
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=01452961-37ea-4a15-8b1b-02f5a70e9545&lang=ru_RU" type="text/javascript"></script>
+  <script type="text/javascript">
+
+      ymaps.ready(init);
+      var myMap;
+
+      function init() {
+          // Создание карты.
+          myMap = new ymaps.Map("map", {
+                  center: [55.766010, 37.684344],
+                  zoom: 10,
+                  controls: ['routeButtonControl', 'typeSelector', 'fullscreenControl',
+                      'zoomControl']
+              },
+              {
+                  maxZoom: 16
+              });
+
+          // Подключаем поисковые подсказки к полю ввода.
+          var suggestView = new ymaps.SuggestView('start-addr'),
+              suggestView = new ymaps.SuggestView('end-addr'),
+              suggestView = new ymaps.SuggestView('transit1'),
+              map,
+              placemark;
+      }
+
+      //Добавляем адррес adr на карту
+      function add_object(adr) {
+          ymaps.geocode(adr, {
+              results: 1
+          }).then(function (res) {
+              // Выбираем первый результат геокодирования.
+              var firstGeoObject = res.geoObjects.get(0);
+
+              firstGeoObject.options.set('preset', 'islands#darkBlueDotIconWithCaption');
+              // Получаем строку с адресом и выводим в иконке геообъекта.
+              firstGeoObject.properties.set('iconCaption', firstGeoObject.getAddressLine());
+
+              // Добавляем первый найденный геообъект на карту.
+              myMap.geoObjects.add(firstGeoObject);
+              gCollection.add(firstGeoObject);
+
+              myMap.setBounds(myMap.geoObjects.getBounds());
+              // Масштабируем карту на область видимости геообъектов.
+          });
+      }
+
+      // КОНЕЦ YANDEX API
+
+      // НАЧАЛО СВОЕГО СКРИПТА
+      document.addEventListener("DOMContentLoaded", add_on_map);
+      document.addEventListener("DOMContentLoaded", ready);
+      document.addEventListener("DOMContentLoaded", create_route);
+
+
+      function ready() {
+          //Функции для кнопок
+          add_on_map('start-addr', 'add-start');
+          add_on_map('end-addr', 'add-end');
+          add_on_map('transit1', 'add-transit1');
+
+
+          // Добавляем поле транзитный адрес
+          let addrCount = 2;
+          document.querySelector(".addr-copy-btn").addEventListener("click", (ev) => {
+              ev.preventDefault();
+              const cont = document.querySelector(".dubl-cont");
+              const item = document.createElement("div");
+              item.classList.add("form-group");
+              item.innerHTML = `<label>Адрес ${addrCount}</label>` +
+                  `<input id="transit${addrCount}" class="form-control" type="text" placeholder= "Введите транзитный адрес">` + `<br>` +
+                  `<input id="add-transit${addrCount}" type="submit" name="commit" ` +
+                  `value="Добавить на карту" class="btn btn-info" data-disable-with="Проверить">`;
+
+              cont.appendChild(item);
+              suggestView = new ymaps.SuggestView('transit' + addrCount),
+                  add_on_map('transit' + addrCount, 'add-transit' + addrCount);
+
+              addrCount++;
+          })
+      }
+
+      //  По кнопке button добавляем адрес из input на карту
+      function add_on_map(input, button) {
+          document.querySelector('#' + button).addEventListener("click", (evt) => {
+              const addr = document.querySelector('#' + input);
+              add_object(addr.value);
+              addr.disabled = true;
+          });
+      }
+
+      function create_route() {
+          document.querySelector('#create-route').addEventListener("click", (evt) => {
+              // Проверяем тип транспорта
+              let transport_type = '';
+
+              // узнаем тип 0 - авто, 1 - общ, 2 - вел, 3 - пешк
+              const radio_checked = document.querySelector('input[name="transport"]:checked').value;
+
+              if (radio_checked == 0) {
+                  transport_type = 'auto';
+              }else if (radio_checked == 1) {
+                  transport_type = 'masstransit';
+              }else if (radio_checked == 2) {
+                  transport_type = 'pedestrian';
+              }else if (radio_checked == 3) {
+                  transport_type = 'bicycle';
+              }
+              console.log(transport_type);
+
+              let coll_length = myMap.geoObjects.getLength(); // Считаем сколько точек на карте
+              var coordinates_array=[];
+              for (let i = 0; i < coll_length; i++) { // Собираем координаты точек в массив
+                  console.log(myMap.geoObjects.get(i).geometry._coordinates);
+                  coordinates_array.push(myMap.geoObjects.get(i).geometry._coordinates);
+              }
+              console.log(coordinates_array);
+              var multiRoute = new ymaps.multiRouter.MultiRoute({
+                  // Описание опорных точек мультимаршрута.
+                  referencePoints: coordinates_array,
+                  // [
+                      // myMap.geoObjects.get(0), // Начальный адрес
+                      // myMap.geoObjects.get(1), // Конечный адрес
+                  // ],
+                  // Параметры маршрутизации.
+                  params: {
+                      // Ограничение на максимальное количество маршрутов, возвращаемое маршрутизатором.
+                      results: 1,
+                      // routingMode: transport_type
+                  }
+              }, {
+                  // Автоматически устанавливать границы карты так, чтобы маршрут был виден целиком.
+                  boundsAutoApply: true
+              });
+              myMap.geoObjects.add(multiRoute);
+              console.log(myMap.geoObjects.get(2));
+          });
+      }
+  </script>
+</head>
+
+<body>
+<%= yield %>
+</body>
+</html>
